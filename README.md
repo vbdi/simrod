@@ -4,6 +4,8 @@ This repo contains the demo and the implementation of the paper 'SimROD: A Simpl
 
 Link to arXiv paper: https://arxiv.org/abs/2107.13389
 
+Link to Huawei's AI Gallery Notebook: [https://developer.huaweicloud.com/develop/aigallery/notebook/detail?id=58b799a0-5cfc-4c2e-8b9b-440bb2315264](https://developer.huaweicloud.com/develop/aigallery/notebook/detail?id=bcc0b386-69ca-43f2-95ab-4580186d327b)
+
 Here, we provide detailed instructions to help replay our experiments. To make it easy to reproduce our research results, we leverage the [ML experiment management tool GuildAI](https://guild.ai/).
 In this documentation, we give an overview of the environment installation and adaptation experiment.
 
