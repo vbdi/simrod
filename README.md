@@ -1,4 +1,8 @@
-# SimROD: a Simple adaptation method for Robust Object Detection
+# SimROD: A Simple Adaptation Method for Robust Object Detection
+
+This repo contains the demo and the implementation of the paper 'SimROD: A Simple Adaptation Method for Robust Object Detection', published at ICCV2021 (Oral).
+
+Link to arXiv paper: https://arxiv.org/abs/2107.13389
 
 Here, we provide detailed instructions to help replay our experiments. To make it easy to reproduce our research results, we leverage the [ML experiment management tool GuildAI](https://guild.ai/).
 In this documentation, we give an overview of the environment installation and adaptation experiment.
