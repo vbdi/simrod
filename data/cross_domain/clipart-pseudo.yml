@@ -1,0 +1,39 @@
+ckpt_run_id: pascal-source-5s-416
+
+output_run_id: clipart-adapt-5s-416
+
+corruption: clipart
+
+username: ${env:USER}
+
+result_dir: /home/${username}/tmp_guild/runs/${output_run_id}
+
+pseudo_run_id: clipart-adapt-5x-1280
+
+split: train
+
+# 10K sim10k + 11K city
+train:
+  - /home/${username}/data/voc_yolo/VOC2007/labels/trainval  # 5011   # source data
+  - /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption} # 500
+  - /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption} # 500
+  - /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption} # 500
+  - /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption} # 500
+  - /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption} # 500
+  - /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption} # 500
+  - /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption} # 500
+  - /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption} # 500
+  - /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption} # 500
+  - /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption} # 500
+
+val: /home/${username}/data/cross_yolo/labels/test-${corruption}
+
+clean_test: /home/${username}/data/voc_yolo/VOC2007/labels/test
+corrupt_test: /home/${username}/data/cross_yolo/labels/test-${corruption}
+
+
+# number of classes
+nc: 20
+
+names:  ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog',
+         'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']

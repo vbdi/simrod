@@ -1,0 +1,20 @@
+
+# train and val datasets (image directory or *.txt file with image paths)
+data_folder: /home/${username}/data
+corruption: contrast
+severity: 3
+ckpt_run_id: 0
+
+year : 2012
+split : trainval
+source: ${data_folder}/voc_yolo/VOC${year}/images/${split}-${corruption}-${severity}
+
+labels_dir: ${data_folder}/voc_yolo/VOC${year}/pseudolabels/${ckpt_run_id}/labels/${split}-${corruption}-${severity}
+predictions_dir: ${data_folder}/voc_yolo/VOC${year}/pseudolabels/${ckpt_run_id}/predictions/${split}-${corruption}-${severity}
+
+# number of classes
+nc: 20
+
+# class names
+names: ['aeroplane', 'bicycle','bird','boat','bottle','bus','car','cat','chair','cow','diningtable','dog','horse','motorbike','person','pottedplant','sheep','sofa','train','tvmonitor']
+

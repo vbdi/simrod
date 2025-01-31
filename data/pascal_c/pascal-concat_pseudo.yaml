@@ -1,0 +1,24 @@
+data_folder: /home/${username}/data
+corruption: contrast
+severity: 3
+
+test:
+  severity: 0
+
+pseudo_run_id: 8fbf557d7ba34f5b9ac12b73d00dc6a1
+
+# train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+train: ["${data_folder}/voc_yolo/VOC2007/labels/trainval/", "${data_folder}/voc_yolo/VOC2012/pseudolabels/${pseudo_run_id}/labels/trainval-${corruption}-${severity}"]  # 16551 + 11540 images
+
+val: ${data_folder}/voc_yolo/VOC2007/labels/test-${corruption}-${test.severity}/  # 4952 images
+clean_test: ${data_folder}/voc_yolo/VOC2007/labels/test
+corrupt_test: ${data_folder}/voc_yolo/VOC2007/labels/test-${corruption}-${test.severity}/
+
+# number of classeso
+nc: 20
+
+# class names
+names: ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog',
+        'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
+
+result_dir: ./outputs

@@ -1,0 +1,17 @@
+
+# train and val datasets (image directory or *.txt file with image paths)
+corruption: contrast
+severity: 3
+
+ckpt_run_id: yolov5x_proposed_step2
+split: target
+source: /data/${username}/domain-adaptation/target_half/all_v2/images/${split}-${corruption}-${severity}
+
+labels_dir: /data/${username}/domain-adaptation/target_half/all_v2/pseudolabels/${ckpt_run_id}/labels/${split}-${corruption}-${severity}
+predictions_dir: /data/${username}/domain-adaptation/target_half/all_v2/pseudolabels/${ckpt_run_id}/predictions/${split}-${corruption}-${severity}
+
+# number of classes
+nc: 8
+
+# class names
+names:  ['person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle']

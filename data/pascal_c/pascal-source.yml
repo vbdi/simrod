@@ -1,0 +1,26 @@
+
+# train and val datasets (image directory or *.txt file with image paths)
+username: ${env:USER}
+
+data_folder: /home/${username}/data
+corruption: contrast
+severity: 3
+ckpt_run_id: 0
+
+test:
+  severity: 0
+
+train: ${data_folder}/voc_yolo/VOC2007/labels/trainval
+val: ${data_folder}/voc_yolo/VOC2007/labels/test
+
+clean_test: ${data_folder}/voc_yolo/VOC2007/labels/test
+corrupt_test: ${data_folder}/voc_yolo/VOC2007/labels/test-${corruption}-${test.severity}/
+
+# number of classes
+nc: 20
+
+# class names
+names: ['aeroplane', 'bicycle','bird','boat','bottle','bus','car','cat','chair','cow','diningtable','dog','horse','motorbike','person','pottedplant','sheep','sofa','train','tvmonitor']
+
+
+result_dir: ./outputs

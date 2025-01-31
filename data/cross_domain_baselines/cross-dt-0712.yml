@@ -1,0 +1,24 @@
+corruption: clipart
+severity: 3
+
+test:
+  severity: 0
+
+username: ${env:USER}
+# GUILD_HOME: /home/${username}/.guild
+result_dir: ${env:GUILD_HOME}/runs/cross/${corruption}-dt-5m
+
+# train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+train:
+  - /home/${username}/data/cross_yolo/VOC2007/labels/trainval-dt_${corruption}
+  - /home/${username}/data/cross_yolo/VOC2012/labels/trainval-dt_${corruption}
+
+val: /home/${username}/data/cross_yolo/labels/test-${corruption}
+clean_test: /home/${username}/data/voc_yolo/VOC2007/labels/test
+corrupt_test: /home/${username}/data/cross_yolo/labels/test-${corruption}
+
+# number of classes
+nc: 20
+
+names:  ['aeroplane', 'bicycle','bird','boat','bottle','bus','car','cat','chair','cow','diningtable','dog','horse','motorbike','person','pottedplant','sheep','sofa','train','tvmonitor']
+

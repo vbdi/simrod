@@ -1,0 +1,13 @@
+corruption: clipart
+
+username: ${env:USER}
+
+val: /home/${username}/data/cross_yolo/labels/test-${corruption}
+clean_test: /home/${username}/data/voc_yolo/VOC2007/labels/test
+corrupt_test: /home/${username}/data/cross_yolo/labels/test-${corruption}
+
+# number of classes
+nc: 20
+
+names:  ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog',
+         'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']

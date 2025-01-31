@@ -1,0 +1,21 @@
+corruption: contrast
+severity: 3
+
+test:
+  severity: 0
+
+result_dir: /data/${username}/domain-adaptation/training/outputs/city5s/no_augment_v2
+
+# train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+train: /datasets/city_yolo_source_half/train/labels
+
+#train: /home/${username}/data/voc_yolo/VOC2007/pseudolabels/${ckpt_run_id}/labels/trainval
+
+val: /data/${username}/domain-adaptation/city_yolo/labels/val  # 492 images
+clean_test: /data/${username}/domain-adaptation/city_yolo/labels/val/
+corrupt_test: /data/${username}/domain-adaptation/city_yolo/labels/val-*-${test.severity}
+
+# number of classes
+nc: 8
+
+names:  ['person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle']

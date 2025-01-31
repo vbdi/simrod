@@ -1,0 +1,16 @@
+corruption: city_car_only_yolo
+severity: 3
+
+test:
+  severity: 0
+
+username: ${env:USER}
+
+val: /home/${username}/data/city_car_only_yolo/labels/val
+clean_test: /home/${username}/data/sim10k_yolo/labels
+corrupt_test: /home/${username}/data/city_car_only_yolo/labels/val
+
+# number of classes
+nc: 1
+
+names:  ['car']

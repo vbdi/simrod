@@ -1,0 +1,10 @@
+corruption: contrast
+severity: 3
+
+test: /datasets/city_yolo_target_half/corruptions/labels/target-fog-3
+
+
+# number of classes
+nc: 8
+
+names:  ['person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle']

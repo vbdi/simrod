@@ -1,0 +1,62 @@
+corruption: city_car_only_yolo
+severity: 3
+
+test:
+  severity: 0
+
+username: ${env:USER}
+
+split: train
+ckpt_run_id: sim10k-source-5m                     # defines initial checkpoint
+pseudo_run_id: ${ckpt_run_id}                     # defines pseudolabels in the training data, and the initial weights for pseudolabeling in step 1 and 3
+output_run_id: sim10k-prop-5m       # defines the run id of the current job (where labels, predictions, and training results are saved)
+result_dir: /home/${username}/tmp_guild/runs/classic_da/${output_run_id}
+
+# step 1 generate labels
+step_1:
+  weights: ${env:GUILD_HOME}/runs/classic_da/${pseudo_run_id}/weights/best.pt   # initial weights to do the pseudo-labeling
+  source: /home/${username}/data/city_car_only_yolo/images/${split}      # images to label
+  labels_dir: /home/${username}/data/city_car_only_yolo/pseudolabels/${output_run_id}/labels/${split}
+  predictions_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/predictions/${split}
+
+# step 2 train
+step_2:
+  weights: ${env:GUILD_HOME}/runs/classic_da/${ckpt_run_id}/weights/best.pt
+  # train data as list
+  train:
+    - /home/${username}/data/sim10k_yolo/labels  # 10K
+    - ${step_1.labels_dir}
+    - ${step_1.labels_dir}
+    - ${step_1.labels_dir}
+    - ${step_1.labels_dir}
+  result_dir: ${result_dir}/step2_output
+
+# step 3 refine labels
+step_3:
+  weights: ${step_2.result_dir}/weights/best.pt  # use ${step_1.weights} when using 5X pseudolabels to adapt a smaller model
+  source: ${step_1.source}
+  labels_dir: /home/${username}/data/city_car_only_yolo/pseudolabels/${output_run_id}-refined/labels/${split}
+  predictions_dir: /home/${username}/data/city_car_only_yolo/pseudolabels/${output_run_id}-refined/predictions/${split}
+
+# step 4 traind.step_4.train
+step_4:
+  # train data as list
+  weights: ${step_2.result_dir}/weights/best.pt
+  train:
+    - /home/${username}/data/sim10k_yolo/labels
+    - ${step_3.labels_dir}
+    - ${step_3.labels_dir}
+    - ${step_3.labels_dir}
+    - ${step_3.labels_dir}
+  result_dir: ${result_dir}/final_output
+
+val: /home/${username}/data/city_car_only_yolo/labels/val
+
+clean_test: /home/${username}/data/sim10k_yolo/labels
+corrupt_test: /home/${username}/data/city_car_only_yolo/labels/val
+
+
+# number of classes
+nc: 1
+
+names:  ['car']

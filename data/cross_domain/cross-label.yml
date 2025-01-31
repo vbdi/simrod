@@ -1,0 +1,19 @@
+
+# train and val datasets (image directory or *.txt file with image paths)
+corruption: clipart
+
+ckpt_run_id: clipart-adapt-5x-416
+split: train
+
+username: ${env:USER}
+
+source: /home/${username}/data/cross_yolo/images/${split}-${corruption}      # images to label
+
+labels_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption}
+predictions_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/predictions/${split}-${corruption}
+
+# number of classes
+nc: 1
+
+# class names
+names:  ['car']

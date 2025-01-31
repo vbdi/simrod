@@ -1,0 +1,19 @@
+
+# train and val datasets (image directory or *.txt file with image paths)
+corruption: city_car_only_yolo
+severity: 3
+
+ckpt_run_id: sim10k-adapt-5x-1280
+split: train
+
+username: ${env:USER}
+
+source: /home/${username}/data/city_car_only_yolo/images/${split}      # images to label
+
+labels_dir: /home/${username}/data/city_car_only_yolo/pseudolabels/${output_run_id}/labels/${split}
+predictions_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/predictions/${split}
+# number of classes
+nc: 1
+
+# class names
+names:  ['car']

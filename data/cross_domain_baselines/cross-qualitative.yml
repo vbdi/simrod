@@ -1,0 +1,21 @@
+corruption: clipart
+severity: 3
+
+test:
+  severity: 0
+
+
+split: train
+part: images
+ckpt_run_id: pascal_5s_source                  # defines initial checkpoint
+output_run_id: qualitative_train_clipart_source
+
+source: /home/${username}/data/cross_yolo/${part}/${split}-${corruption}  # images to label
+labels_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption}
+predictions_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/predictions/${split}-${corruption}
+
+# number of classes
+nc: 20
+
+names:  ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog',
+         'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']

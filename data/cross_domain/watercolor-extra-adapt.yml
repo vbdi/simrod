@@ -1,0 +1,75 @@
+corruption: watercolor
+severity: 3
+
+test:
+  severity: 0
+
+username: ${env:USER}
+# GUILD_HOME: /home/${username}/.guild
+
+split: train
+ckpt_dataset: pascal
+ckpt_run_id: pascal_5m_source/outputs                     # defines initial checkpoint
+pseudo_dataset: ${ckpt_dataset}
+pseudo_run_id: ${ckpt_run_id}                     # defines pseudolabels in the training data, and the initial weights for pseudolabeling in step 1 and 3
+output_run_id: cross-prop-5m-${corruption}       # defines the run id of the current job (where labels, predictions, and training results are saved)
+result_dir: ${env:GUILD_HOME}/runs/cross/${output_run_id}
+
+# step 1 generate labels
+step_1:
+  weights: ${env:GUILD_HOME}/runs/${pseudo_dataset}/${pseudo_run_id}/weights/best.pt   # initial weights to do the pseudo-labeling
+  source: /home/${username}/data/cross_yolo/images/${split}-${corruption}  # train-watercolor: 1000    # images to label
+  labels_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/${split}-${corruption}
+  predictions_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/predictions/${split}-${corruption}
+
+  extra_source: /home/${username}/data/cross_yolo/images/extra-${corruption}  # extra-watercolor: 17814  # extra images to label
+  extra_labels_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/labels/extra-${corruption}
+  extra_predictions_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}/predictions/extra-${corruption}
+
+# step 2 train
+step_2:
+  weights: ${env:GUILD_HOME}/runs/${ckpt_dataset}/${ckpt_run_id}/weights/best.pt
+  # train data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+  train:
+    - /home/${username}/data/voc_yolo/VOC2007/labels/trainval  # 5011   # source data must be put first in the train list!
+    - ${step_1.labels_dir} # 1000
+    - ${step_1.extra_labels_dir} # 17814
+    - /home/${username}/data/voc_yolo/VOC2007/labels/trainval
+    - /home/${username}/data/voc_yolo/VOC2007/labels/trainval
+  result_dir: ${result_dir}/step2_output
+
+# step 3 generate labels
+step_3:
+  weights: ${step_2.result_dir}/weights/best.pt  # use ${step_1.weights} when using 5X pseudolabels to adapt a smaller model
+  source: ${step_1.source}
+  labels_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}-refined/labels/${split}-${corruption}
+  predictions_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}-refined/predictions/${split}-${corruption}
+
+  extra_source: ${step_1.extra_source}
+  extra_labels_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}-refined/labels/extra-${corruption}
+  extra_predictions_dir: /home/${username}/data/cross_yolo/pseudolabels/${output_run_id}-refined/predictions/extra-${corruption}
+
+# step 4 traind.step_4.train
+step_4:
+  # train data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+  weights: ${step_2.result_dir}/weights/best.pt
+  train:
+    - /home/${username}/data/voc_yolo/VOC2007/labels/trainval  # 5011  # source data must be put first in the train list!
+    - ${step_3.labels_dir}        # 1000
+    - ${step_3.extra_labels_dir}  # 17814
+    - /home/${username}/data/voc_yolo/VOC2007/labels/trainval
+    - /home/${username}/data/voc_yolo/VOC2007/labels/trainval
+  result_dir: ${result_dir}/final_output
+
+
+# val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+val: /home/${username}/data/cross_yolo/labels/test-${corruption}
+clean_test: /home/${username}/data/voc_yolo/VOC2007/labels/test
+corrupt_test: /home/${username}/data/cross_yolo/labels/test-${corruption}
+
+
+# number of classes
+nc: 20
+
+names:  ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog',
+         'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']

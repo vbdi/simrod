@@ -1,0 +1,28 @@
+# weights : 'weights/yolov5s.pt'
+ckpt_run_id: '8fbf557d7ba34f5b9ac12b73d00dc6a1'  # m no augment
+ckpt_root_dir: ${env:GUILD_HOME} # /home/${username}/tmp_guild #
+ckpt_dir: ${ckpt_root_dir}/runs/${ckpt_run_id}/outputs
+weights: ${ckpt_root_dir}/runs/${ckpt_run_id}/outputs/weights/best.pt
+
+test:
+  corruption: contrast
+  severity: 0
+  individual_severity: false
+
+# train and val datasets (image directory or *.txt file with image paths)
+clean_path: /home/${username}/data/voc_yolo/VOC2007/images/test
+
+# data: data/coco128.yaml
+batch_size: 32
+img_size: 416
+
+conf_thres: 0.001
+iou_thres: 0.65
+
+save_json: false    # save a cocoapi-compatible JSON results file
+task: 'test'        # DO NOT CHANGE
+device: '1'         # 0 or 0,1,2,3 or cpu'
+single_cls: false   # treat as single-class dataset
+augment: false      # augmented inference
+merge: false        # use Merge NMS
+verbose: false      # report mAP by class

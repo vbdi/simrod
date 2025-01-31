@@ -1,0 +1,31 @@
+ckpt_run_id: 0
+
+output_run_id: debug
+
+test:
+  severity: 0
+
+username: ${env:USER}
+
+result_dir: /home/${username}/tmp_guild/runs/sim10k/${output_run_id}
+
+
+# 10K sim10k + 11K city
+train:
+  - /home/${username}/data/sim10k_yolo/labels
+  - /home/${username}/data/city_car_only_yolo/labels/train
+  - /home/${username}/data/city_car_only_yolo/labels/train
+  - /home/${username}/data/city_car_only_yolo/labels/train
+  - /home/${username}/data/city_car_only_yolo/labels/train
+
+val: /home/${username}/data/city_car_only_yolo/labels/val  # 492 images
+
+clean_test: /home/${username}/data/sim10k_yolo/labels
+corrupt_test: /home/${username}/data/city_car_only_yolo/labels/val
+
+# number of classes
+nc: 1
+
+names:  ['car']
+
+

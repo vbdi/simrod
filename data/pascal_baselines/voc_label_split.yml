@@ -1,0 +1,18 @@
+
+corruption: contrast
+severity: 3
+ckpt_run_id: 0
+
+year : 2012
+split : trainval
+
+img_source: /home/${username}/data/voc_yolo/VOC${year}/images/${split}-${corruption}-${severity}
+
+gt_dir_source: /home/${username}/data/voc_yolo/VOC${year}/labels/${split}-${corruption}-${severity}
+
+pseudo_dir_source: /home/${username}/data/voc_yolo/VOC${year}/pseudolabels/${ckpt_run_id}/labels/${split}-${corruption}-${severity}
+
+labeled_ratio: 0.2
+
+gt_dir_dst: /home/${username}/data/voc_yolo/VOC${year}/pseudolabels/${ckpt_run_id}/labels/${split}-${corruption}-${severity}-split_gt-${labeled_ratio}
+pseudo_dir_dst: /home/${username}/data/voc_yolo/VOC${year}/pseudolabels/${ckpt_run_id}/labels/${split}-${corruption}-${severity}-split_pseudo-${labeled_ratio}

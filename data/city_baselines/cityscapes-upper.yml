@@ -1,0 +1,28 @@
+corruption: contrast
+severity: 3
+split: target
+
+test:
+  severity: 0
+
+# GUILD_HOME: /home/${username}/.guild
+
+result_dir: ${env:GUILD_HOME}/runs/cityscapes/cityscapes-upper-5x-contrast
+
+# train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+train: 
+  - /datasets/city_yolo_source_half/train/labels
+  - /datasets/city_yolo_target_half/corruptions/labels/${split}-${corruption}-${severity}
+
+val: /datasets/city_yolo/labels/val-${corruption}-${test.severity}
+clean_test: /datasets/city_yolo/labels/val
+corrupt_test: /datasets/city_yolo/labels/val-${corruption}-${test.severity}
+
+# number of classes
+nc: 8
+
+names:  ['person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle']
+
+
+# [{'id': 24, 'name': 'person'}, {'id': 25, 'name': 'rider'}, {'id': 26, 'name': 'car'}, {'id': 27, 'name': 'truck'},
+# {'id': 28, 'name': 'bus'}, {'id': 31, 'name': 'train'}, {'id': 32, 'name': 'motorcycle'}, {'id': 33, 'name': 'bicycle'}]

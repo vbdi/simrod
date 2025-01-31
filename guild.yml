@@ -1,0 +1,4624 @@
+# Operations for training, adapting, evaluating models on different domain adaptation benchmarks
+
+# Sim10K to Cityscapes experiments
+- model: 'sim10k'
+  operations:
+    train_src:
+      description: Train a Sim10K source model
+      main: train
+      flags-dest: args
+      flags:
+        data: data/sim10k/sim10k_source.yml
+        cfg: models/yolov5m.yaml
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        weights: 'yolov5m.pt'
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 200
+        augment:
+          default: false
+          arg-switch: yes
+        augmix:
+          default: false
+          arg-switch: yes
+        shuffle: true
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 640
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: outputs
+        - exclude:
+            dir: docs
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "models/*py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+      - file: data/sim10k/sim10k_source.yml
+        path: data/sim10k
+      - file: models/yolov5s.yaml
+        path: models
+      - file: models/yolov5m.yaml
+        path: models
+      - file: models/yolov5x.yaml
+        path: models
+      - file: yolov5s.pt
+      - file: yolov5m.pt
+      - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    adapt:
+      description: Adapt a Sim10K model to Cityscapes
+      main: adapt
+      flags-dest: args
+      flags:
+        data: data/sim10k/sim10k_adapt.yml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: sim10k-source-1280-5x
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: sim10k-source-1280-5x
+        output_run_id:
+          arg-name: output-run-id
+          default: sim10k-adapt-5x-1280
+        cfg: models/yolov5x.yaml
+        corruption: city_car_only
+        split: train
+        warmup_epochs:
+          arg-name: epochs
+          default: 50
+        finetune_epochs:
+          arg-name: finetune-epochs
+          default: 150
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 32
+        epochs: 100
+        augment:
+          default: yes
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 1280
+        label_img_size:
+          arg-name: label-img-size
+          default: 1280
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/sim10k/sim10k_adapt.yml
+          path: data/sim10k
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    tune_pseudo:
+      description: Finetune a Sim10K model with labeled source data and unlabed Cityscapes + pseudo-labels
+      main: train
+      flags-dest: args
+      flags:
+        data: data/sim10k/sim10k_pseudo.yaml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: 'sim10k-source-5s-416'
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        cfg: models/yolov5m.yaml
+        corruption: city_car_only_yolo
+        split: train
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/sim10k/sim10k_pseudo.yaml
+          path: data/sim10k
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    test:
+      description: Test a model on Cityscapes target test set
+      main: test
+      flags-dest: args
+      flags:
+        data: data/sim10k/sim10k_test.yml
+        ckpt_run_id:
+          default: '8fbf557d7ba34f5b9ac12b73d00dc6a1'
+          arg-name: ckpt-run-id
+        corruption: contrast
+        severity: 0
+        bs:
+          arg-name: batch-size
+          default: 64
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+        verbose:
+          default: false
+          arg-switch: yes
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - exclude:
+            dir: docs
+        - exclude:
+            dir: outputs
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+
+      requires:
+      - file: data/sim10k/sim10k_test.yml
+        path: data/sim10k
+
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =severity
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+
+    label:
+      description: Generate pseudo-labels on unlabeled Cityscapes training images
+      main: label
+      flags-dest: args
+      flags:
+        data: data/sim10k/sim10k_label.yml
+        ckpt_run_id:
+          default: sim10k-adapt-5x-1280
+          arg-name: ckpt-run-id
+        corruption: city_car_only_yolo
+        split: train
+        display:
+          default: false
+          arg-switch: yes
+        save:
+          default: false
+          arg-switch: yes
+        confidence:
+          default: false
+          arg-switch: yes
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 1280
+        conf_threshold:
+          arg-name: conf-thres
+          default: 0.4
+        iou_threshold:
+          arg-name: iou-thres
+          default: 0.65
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "*.png"
+        - include: "*.jpg"
+        - include: "utils/*.py"
+      requires:
+        - file: data/sim10k/sim10k_label.yml
+          path: data/sim10k
+
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =ckpt_run_id
+        - =split
+        - =year
+
+
+# KITTI to Cityscapes experiments
+- model: 'kitti'
+  operations:
+    train_src:
+      description: Train a KITTI source model
+      main: train
+      flags-dest: args
+      flags:
+        data: data/kitti/kitti_source.yml
+        cfg: models/yolov5m.yaml
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        weights: 'yolov5m.pt'
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 200
+        augment:
+          default: false
+          arg-switch: yes
+        augmix:
+          default: false
+          arg-switch: yes
+        shuffle: true
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 640
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: outputs
+        - exclude:
+            dir: docs
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "models/*py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+      - file: data/kitti/kitti_source.yml
+        path: data/kitti
+      - file: models/yolov5s.yaml
+        path: models
+      - file: models/yolov5m.yaml
+        path: models
+      - file: models/yolov5x.yaml
+        path: models
+      - file: yolov5s.pt
+      - file: yolov5m.pt
+      - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    adapt:
+      description: Adapt a KITTI model to Cityscapes
+      main: adapt
+      flags-dest: args
+      flags:
+        data: data/kitti/kitti_adapt.yml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: sim10k-source-1280-5x
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: kitti-source-5x-1280
+        output_run_id:
+          arg-name: output-run-id
+          default: kitti-adapt-5x-1280
+        cfg: models/yolov5x.yaml
+        corruption: city_car_only
+        split: train
+        warmup_epochs:
+          arg-name: epochs
+          default: 50
+        finetune_epochs:
+          arg-name: finetune-epochs
+          default: 150
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 32
+        epochs: 100
+        augment:
+          default: yes
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 1280
+        label_img_size:
+          arg-name: label-img-size
+          default: 1280
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/kitti/kitti_adapt.yml
+          path: data/kitti
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    tune_pseudo:
+      description: Finetune a KITTI model with labeled source data and unlabed Cityscapes + pseudo-labels
+      main: train
+      flags-dest: args
+      flags:
+        data: data/kitti/kitti_pseudo.yaml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: 'kitti-source-5s-416'
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        cfg: models/yolov5m.yaml
+        corruption: city_car_only_yolo
+        split: train
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/kitti/kitti_pseudo.yaml
+          path: data/kitti
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    test:
+      description: Test a model on Cityscapes target test set
+      main: test
+      flags-dest: args
+      flags:
+        data: data/kitti/kitti_test.yml
+        ckpt_run_id:
+          default: kitti-adapt-5s-416
+          arg-name: ckpt-run-id
+        corruption: contrast
+        severity: 0
+        bs:
+          arg-name: batch-size
+          default: 64
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+        verbose:
+          default: false
+          arg-switch: yes
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - exclude:
+            dir: docs
+
+        - exclude:
+            dir: outputs
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+
+      requires:
+      - file: data/kitti/kitti_test.yml
+        path: data/kitti
+
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =severity
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+
+    label:
+      description: Generate pseudo-labels on unlabeled Cityscapes training images
+      main: label
+      flags-dest: args
+      flags:
+        data: data/kitti/kitti_label.yml
+        ckpt_run_id:
+          default: kitti-adapt-5x-1280
+          arg-name: ckpt-run-id
+        corruption: city_car_only_yolo
+        split: train
+        display:
+          default: false
+          arg-switch: yes
+        save:
+          default: false
+          arg-switch: yes
+        confidence:
+          default: false
+          arg-switch: yes
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 1280
+        conf_threshold:
+          arg-name: conf-thres
+          default: 0.4
+        iou_threshold:
+          arg-name: iou-thres
+          default: 0.65
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "*.png"
+        - include: "*.jpg"
+        - include: "utils/*.py"
+      requires:
+        - file: data/kitti/kitti_label.yml
+          path: data/kitti
+
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =ckpt_run_id
+        - =split
+        - =year
+
+
+# VOC to Clipart adaptation experiments
+- model: 'clipart'
+  operations:
+    train_src:
+      description: Train a source Pascal model with VOC2007 trainval
+      main: train
+      flags-dest: args
+      flags:
+        data: data/cross_domain/pascal-source.yml
+        cfg: models/yolov5m.yaml
+        corruption: clipart
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        weights: 'yolov5m.pt'
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        augmix:
+          default: false
+          arg-switch: yes
+        shuffle: false
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: outputs
+        - exclude:
+            dir: docs
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "models/*py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+      - file: data/cross_domain/pascal-source.yml
+        path: data/cross_domain
+      - file: models/yolov5s.yaml
+        path: models
+      - file: models/yolov5m.yaml
+        path: models
+      - file: models/yolov5x.yaml
+        path: models
+      - file: yolov5s.pt
+      - file: yolov5m.pt
+      - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+
+    adapt:
+      description: Adapt a Pascal VOC model to Clipart
+      main: adapt
+      flags-dest: args
+      flags:
+        data: data/cross_domain/clipart-adapt.yml
+        teacher_adapt:
+          arg-name: teacher-adapt
+          default: false
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: clipart-source-5x-416
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: clipart-source-5x-416
+        output_run_id:
+          arg-name: output-run-id
+          default: clipart-adapt-5x-416
+        cfg: models/yolov5x.yaml
+        corruption: clipart
+        split: train
+        warmup_epochs:
+          arg-name: epochs
+          default: 50
+        finetune_epochs:
+          arg-name: finetune-epochs
+          default: 150
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        augment:
+          default: yes
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        label_img_size:
+          arg-name: label-img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/cross_domain/clipart-adapt.yml
+          path: data/cross_domain
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    tune_pseudo:
+      description: Finetune a model using both labeled source data and unlabeled Clipart + pseudo-labels
+      main: train
+      flags-dest: args
+      flags:
+        data: data/cross_domain/clipart-pseudo.yml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: 8fbf557d7ba34f5b9ac12b73d00dc6a1
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        cfg: models/yolov5m.yaml
+        corruption: clipart
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/cross_domain/clipart-pseudo.yml
+          path: data/cross_domain
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    test:
+      description: Test a model on Clipart test set
+      main: test
+      flags-dest: args
+      flags:
+        data: data/cross_domain/cross-test.yml
+        ckpt_run_id:
+          default: clipart-adapt-5s-416
+          arg-name: ckpt-run-id
+        corruption: clipart
+        severity: 0
+        bs:
+          arg-name: batch-size
+          default: 64
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+        verbose:
+          default: false
+          arg-switch: yes
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - exclude:
+            dir: docs
+
+        - exclude:
+            dir: outputs
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+
+      requires:
+      - file: data/cross_domain/cross-test.yml
+        path: data/cross_domain
+
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =severity
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+
+    label:
+      description: Generate pseudo-labels of given image set
+      main: label
+      flags-dest: args
+      flags:
+        data: data/cross_domain/cross-label.yml
+        ckpt_run_id:
+          default: clipart-adapt-5x-416
+          arg-name: ckpt-run-id
+        corruption: clipart
+        display:
+          default: false
+          arg-switch: yes
+        save:
+          default: false
+          arg-switch: yes
+        confidence:
+          default: false
+          arg-switch: yes
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        conf_threshold:
+          arg-name: conf-thres
+          default: 0.4
+        iou_threshold:
+          arg-name: iou-thres
+          default: 0.65
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "*.png"
+        - include: "*.jpg"
+        - include: "utils/*.py"
+      requires:
+        - file: data/cross_domain/cross-label.yml
+          path: data/cross_domain
+
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =ckpt_run_id
+        - =split
+        - =year
+
+
+# VOC to Watercolor adaptation experiments
+- model: 'water'
+  operations:
+    train_src:
+      description: Train a source Pascal model with VOC2007 trainval
+      main: train
+      flags-dest: args
+      flags:
+        data: data/cross_domain/pascal-source.yml
+        cfg: models/yolov5m.yaml
+        corruption: watercolor
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        weights: 'yolov5m.pt'
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        augmix:
+          default: false
+          arg-switch: yes
+        shuffle: false
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: outputs
+        - exclude:
+            dir: docs
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "models/*py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+      - file: data/cross_domain/pascal-source.yml
+        path: data/cross_domain
+      - file: models/yolov5s.yaml
+        path: models
+      - file: models/yolov5m.yaml
+        path: models
+      - file: models/yolov5x.yaml
+        path: models
+      - file: yolov5s.pt
+      - file: yolov5m.pt
+      - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+
+    adapt:
+      description: Adapt a Pascal VOC model to Watercolor
+      main: adapt
+      flags-dest: args
+      flags:
+        data: data/cross_domain/watercolor-adapt.yml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: watercolor-source-5x-416
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: watercolor-source-5x-416
+        output_run_id:
+          arg-name: output-run-id
+          default: watercolor-adapt-5x-416
+        cfg: models/yolov5x.yaml
+        corruption: watercolor
+        split: train
+        warmup_epochs:
+          arg-name: epochs
+          default: 50
+        finetune_epochs:
+          arg-name: finetune-epochs
+          default: 150
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        augment:
+          default: yes
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        label_img_size:
+          arg-name: label-img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/cross_domain/watercolor-adapt.yml
+          path: data/cross_domain
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    tune_pseudo:
+      description: Finetune a model using both labeled source data and unlabeled Watercolor + pseudo-labels
+      main: train
+      flags-dest: args
+      flags:
+        data: data/cross_domain/watercolor-pseudo.yaml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: pascal-source-5s-416
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        cfg: models/yolov5m.yaml
+        corruption: watercolor
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/cross_domain/watercolor-pseudo.yaml
+          path: data/cross_domain
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    test:
+      description: Test a model on Watercolor test set
+      main: test
+      flags-dest: args
+      flags:
+        data: data/cross_domain/cross-test.yml
+        ckpt_run_id:
+          default: watercolor-adapt-5s-416
+          arg-name: ckpt-run-id
+        corruption: watercolor
+        severity: 0
+        bs:
+          arg-name: batch-size
+          default: 64
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+        verbose:
+          default: false
+          arg-switch: yes
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - exclude:
+            dir: docs
+
+        - exclude:
+            dir: outputs
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+
+      requires:
+      - file: data/cross_domain/cross-test.yml
+        path: data/cross_domain
+
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =severity
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+
+    label:
+      description: Generate pseudo-labels on Watercolor test set
+      main: label
+      flags-dest: args
+      flags:
+        data: data/cross_domain/cross-label.yml
+        ckpt_run_id:
+          default: watercolor-adapt-5x-416
+          arg-name: ckpt-run-id
+        corruption: watercolor
+        display:
+          default: false
+          arg-switch: yes
+        save:
+          default: false
+          arg-switch: yes
+        confidence:
+          default: false
+          arg-switch: yes
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        conf_threshold:
+          arg-name: conf-thres
+          default: 0.4
+        iou_threshold:
+          arg-name: iou-thres
+          default: 0.65
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "*.png"
+        - include: "*.jpg"
+        - include: "utils/*.py"
+      requires:
+        - file: data/cross_domain/cross-label.yml
+          path: data/cross_domain
+
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =ckpt_run_id
+        - =split
+        - =year
+
+
+# VOC to Comic adaptation experiments
+- model: 'comic'
+  operations:
+    train_src:
+      description: Train a source Pascal model with VOC2007 trainval
+      main: train
+      flags-dest: args
+      flags:
+        data: data/cross_domain/pascal-source.yml
+        cfg: models/yolov5m.yaml
+        corruption: comic
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        weights: 'yolov5m.pt'
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        augmix:
+          default: false
+          arg-switch: yes
+        shuffle: false
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: outputs
+        - exclude:
+            dir: docs
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "models/*py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+      - file: data/cross_domain/pascal-source.yml
+        path: data/cross_domain
+      - file: models/yolov5s.yaml
+        path: models
+      - file: models/yolov5m.yaml
+        path: models
+      - file: models/yolov5x.yaml
+        path: models
+      - file: yolov5s.pt
+      - file: yolov5m.pt
+      - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+
+    adapt:
+      description: Adapt a Pascal VOC model to Comic
+      main: adapt
+      flags-dest: args
+      flags:
+        data: data/cross_domain/comic-adapt.yml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: comic-source-5x-416
+        teacher_adapt:
+          arg-name: teacher-adapt
+          default: false
+          arg-switch: yes
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: comic-source-5x-416
+        output_run_id:
+          arg-name: output-run-id
+          default: comic-adapt-5x-416
+        cfg: models/yolov5x.yaml
+        corruption: comic
+        split: train
+        warmup_epochs:
+          arg-name: epochs
+          default: 50
+        finetune_epochs:
+          arg-name: finetune-epochs
+          default: 150
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        augment:
+          default: yes
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        label_img_size:
+          arg-name: label-img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/cross_domain/comic-adapt.yml
+          path: data/cross_domain
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    tune_pseudo:
+      description: Finetune a model using both labeled source data and unlabeled Comic + pseudo-labels
+      main: train
+      flags-dest: args
+      flags:
+        data: data/cross_domain/comic-pseudo.yaml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: pascal-source-5s-416
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        cfg: models/yolov5m.yaml
+        corruption: comic
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/cross_domain/comic-pseudo.yaml
+          path: data/cross_domain
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    test:
+      description: Test a model on Comic test set
+      main: test
+      flags-dest: args
+      flags:
+        data: data/cross_domain/cross-test.yml
+        ckpt_run_id:
+          default: comic-adapt-5s-416
+          arg-name: ckpt-run-id
+        corruption: comic
+        severity: 0
+        bs:
+          arg-name: batch-size
+          default: 64
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+        verbose:
+          default: false
+          arg-switch: yes
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - exclude:
+            dir: docs
+
+        - exclude:
+            dir: outputs
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+
+      requires:
+      - file: data/cross_domain/cross-test.yml
+        path: data/cross_domain
+
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =severity
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+
+    label:
+      description: Generate pseudo-labels on Comic test set
+      main: label
+      flags-dest: args
+      flags:
+        data: data/cross_domain/cross-label.yml
+        ckpt_run_id:
+          default: comic-adapt-5x-416
+          arg-name: ckpt-run-id
+        corruption: comic
+        display:
+          default: false
+          arg-switch: yes
+        save:
+          default: false
+          arg-switch: yes
+        confidence:
+          default: false
+          arg-switch: yes
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        conf_threshold:
+          arg-name: conf-thres
+          default: 0.4
+        iou_threshold:
+          arg-name: iou-thres
+          default: 0.65
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "*.png"
+        - include: "*.jpg"
+        - include: "utils/*.py"
+      requires:
+        - file: data/cross_domain/cross-label.yml
+          path: data/cross_domain
+
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =ckpt_run_id
+        - =split
+        - =year
+
+
+# Pascal-C adaptation experiments
+- model: 'pascal_c'
+  operations:
+    train_src:
+      description: Train a source Pascal model with clean VOC2007 trainval
+      main: train
+      flags-dest: args
+      flags:
+        data: data/pascal-source.yml
+        cfg: models/yolov5m.yaml
+        corruption: contrast
+        severity:
+          default: 3
+          choices: [1,2,3,4,5,'MIX']
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        weights: 'yolov5m.pt'
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        augmix:
+          default: false
+          arg-switch: yes
+        shuffle: false
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        img_size:
+          arg-name: img-size 
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus: 
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: outputs
+        - exclude:
+            dir: docs
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "models/*py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+      - file: data/pascal-source.yml
+        path: data
+      - file: data/voc_cat-contrast-3.yaml
+        path: data
+      - file: data/pascal_concat.yaml
+        path: data
+      - file: data/pascal-concat_pseudo.yaml
+        path: data
+      - file: data/pascal-deepaug.yml
+        path: data
+      - file: models/yolov5s.yaml
+        path: models   
+      - file: models/yolov5m.yaml
+        path: models
+      - file: models/yolov5l.yaml
+        path: models
+      - file: models/yolov5x.yaml
+        path: models
+      - file: models/yolov4-p5.yaml
+        path: models
+      - file: models/yolov4-p6.yaml
+        path: models
+      - file: models/yolov4-p7.yaml
+        path: models
+      - file: yolov5s.pt
+      - file: yolov5m.pt
+      - file: yolov5l.pt
+      - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+        
+
+    adapt:
+      description: Adapt a Pascal VOC model to specific image corruption type
+      main: adapt
+      flags-dest: args
+      flags:
+        data: data/pascal_c/pascal-adapt.yml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: yolov5x-source
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: 'yolov5x-source'
+        output_run_id:
+          arg-name: output-run-id
+          default: 'pascal-prop-5x'
+        cfg: models/yolov5x.yaml
+        corruption: contrast
+        split: trainval
+        warmup_epochs:
+          arg-name: epochs
+          default: 50
+        finetune_epochs:
+          arg-name: finetune-epochs
+          default: 50
+        severity:
+          default: 3
+          choices: [1,2,3,4,5,'MIX']
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: yes
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        label_img_size:
+          arg-name: label-img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/pascal_c/pascal-source.yml
+          path: data/pascal_c
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5l.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5l.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    tune_pseudo:
+      description: Finetune a model using both labeled (clean) VOC07 trainval and (corrupted) VOC12 trainval with pseudo-labels
+      main: train
+      flags-dest: args
+      flags:
+        data: data/pascal_c/pascal-concat_pseudo.yaml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: 8fbf557d7ba34f5b9ac12b73d00dc6a1
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        cfg: models/yolov5m.yaml
+        corruption: contrast
+        severity:
+          default: 3
+          choices: [1,2,3,4,5,'MIX']
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/pascal_c/pascal-source.yml
+          path: data/pascal_c
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5l.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5l.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    test:
+      description: Test a Yolo object detection model on clean and corrupted Pascal 2007 test sets
+      main: test
+      flags-dest: args
+      flags:
+        data: data/pascal-test.yml
+        ckpt_run_id:
+          default: '8fbf557d7ba34f5b9ac12b73d00dc6a1'
+          arg-name: ckpt-run-id
+        corruption: contrast
+        severity: 0
+        bs:
+          arg-name: batch-size
+          default: 64
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+        verbose:
+          default: false
+          arg-switch: yes
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - exclude:
+            dir: docs
+
+        - exclude:
+            dir: outputs
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+
+      requires:
+      - file: data/pascal-test.yml
+        path: data
+
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =severity
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+
+    label:
+      description: Generate pseudo-labels of given image set
+      main: label
+      flags-dest: args
+      flags:
+        data: data/pascal_c/pascal-label.yml
+        ckpt_run_id:
+          default: '8fbf557d7ba34f5b9ac12b73d00dc6a1'  # yolov5m
+          arg-name: ckpt-run-id
+        corruption: contrast
+        severity: 3
+        year: 2012
+        split: trainval
+        display:
+          default: false
+          arg-switch: yes
+        save:
+          default: false
+          arg-switch: yes
+        confidence:
+          default: false
+          arg-switch: yes
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 416
+        conf_threshold:
+          arg-name: conf-thres
+          default: 0.4
+        iou_threshold:
+          arg-name: iou-thres
+          default: 0.65
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "*.png"
+        - include: "*.jpg"
+        - include: "utils/*.py"
+      requires:
+        - file: data/pascal_c/pascal-label.yml
+          path: data
+
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =ckpt_run_id
+        - =split
+        - =year
+
+
+# COCO-C adaptation experiments
+- model: 'coco_c'
+  operations:
+    train:
+      description: Train a COCO model with clean images
+      main: train
+      flags-dest: args
+      flags:
+        data: data/coco_c/coco-source.yml
+        cfg: models/yolov5m.yaml
+        corruption: contrast
+        severity:
+          default: 3
+          choices: [1,2,3,4,5,'MIX']
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        weights: 'yolov5m.pt'
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        shuffle: true
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 640
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: outputs
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+      - file: data/coco-source.yml
+        path: data
+      - file: data/coco_source.yml
+        path: data
+      - file: data/coco_deep_augment.yml
+        path: data
+      - file: models/yolov5s.yaml
+        path: models
+      - file: models/yolov5m.yaml
+        path: models
+      - file: models/yolov5l.yaml
+        path: models
+      - file: models/yolov5x.yaml
+        path: models
+      - file: yolov5s.pt
+      - file: yolov5m.pt
+      - file: yolov5l.pt
+      - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        # - max mAP@.5:.95 as best_mAP.5.95
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        # - last mAP@.5:.95 as last_mAP.5.95
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    adapt:
+      description: Adapt a COCO model to specific image corruption type
+      main: adapt
+      flags-dest: args
+      flags:
+        data: data/coco_c/coco-adapt.yml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: yolov5x-source
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: 'yolov5x-source'
+        output_run_id:
+          arg-name: output-run-id
+          default: 'pascal-prop-5x'
+        cfg: models/yolov5x.yaml
+        corruption: contrast
+        split: train2017-second_half
+        warmup_epochs:
+          arg-name: epochs
+          default: 50
+        finetune_epochs:
+          arg-name: finetune-epochs
+          default: 50
+        severity:
+          default: 3
+          choices: [1,2,3,4,5,'MIX']
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        augment:
+          default: yes
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 640
+        label_img_size:
+          arg-name: label-img-size
+          default: 640
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/pascal-source.yml
+          path: data
+        - file: data/voc_cat-contrast-3.yaml
+          path: data
+        - file: data/pascal_concat.yaml
+          path: data
+        - file: data/pascal-concat_pseudo.yaml
+          path: data
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5l.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5l.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    tune_pseudo:
+      description: Finetune a COCO model using both labeled clean source data and corrupted target data with pseudo-labels
+      main: train
+      flags-dest: args
+      flags:
+        data: data/coco_c/coco_concat_pseudo.yaml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: 'coco_m'
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: 'coco_m'
+        cfg: models/yolov5m.yaml
+        corruption: contrast
+        split: train2017-second_half
+        severity:
+          default: 3
+          choices: [1,2,3,4,5,'MIX']
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 640
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/coco_concat_pseudo.yaml
+          path: data
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5l.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5l.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        # - max mAP@.5:.95 as best_mAP.5.95
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        # - last mAP@.5:.95 as last_mAP.5.95
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    test:
+      description: Test a Yolo object detection model on Cityscapes val
+      main: test
+      flags-dest: args
+      flags:
+        data: data/coco_c/coco_test.yml
+        ckpt_run_id:
+          default: 'coco_m'  # yolov5m trained on train2017 with augmentation
+          arg-name: ckpt-run-id
+        corruption: contrast
+        severity: 0
+        bs:
+          arg-name: batch-size
+          default: 64
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 640
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+        verbose:
+          default: false
+          arg-switch: yes
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+
+      requires:
+        - file: data/coco_test.yml
+          path: data
+
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+
+        - =data
+        - =augment
+        - =corruption
+        - =severity
+        - =ckpt_run_id
+        - =img_size
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+
+    label:
+      description: Generate pseudo-labels of given image set on Cityscapes dataset
+      main: label
+      flags-dest: args
+      flags:
+        data: data/coco_c/coco_label.yml
+        ckpt_run_id:
+          default: 'city_m'  # yolov5m trained trained with Cityscapes
+          arg-name: ckpt-run-id
+        corruption: contrast
+        severity: 3
+        year: 2017
+        split: unlabeled
+        display:
+          default: false
+          arg-switch: yes
+        save:
+          default: false
+          arg-switch: yes
+        confidence:
+          default: false
+          arg-switch: yes
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 640
+        conf_threshold:
+          arg-name: conf-thres
+          default: 0.4
+        iou_threshold:
+          arg-name: iou-thres
+          default: 0.65
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "*.png"
+        - include: "*.jpg"
+        - include: "utils/*.py"
+      requires:
+        - file: data/coco_label.yml
+          path: data
+
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =ckpt_run_id
+        - =split
+        - =year
+
+
+# Cityscapes-C adaptation experiments
+- model: 'city_c'
+  operations:
+    train_src:
+      description: Train a Cityscapes model with clean images
+      main: train
+      flags-dest: args
+      flags:
+        data: data/city/cityscapes_source.yml
+        cfg: models/yolov5m.yaml
+        corruption: contrast
+        severity:
+          default: 3
+          choices: [1,2,3,4,5,'MIX']
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+        weights: 'yolov5m.pt'
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 200
+        augment:
+          default: false
+          arg-switch: yes
+        augmix:
+          default: false
+          arg-switch: yes
+        shuffle: false
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 640
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: outputs
+        - exclude:
+            dir: docs
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "models/*py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+      - file: data/pascal-source.yml
+        path: data
+      - file: data/voc_cat-contrast-3.yaml
+        path: data
+      - file: data/pascal_concat.yaml
+        path: data
+      - file: data/pascal-concat_pseudo.yaml
+        path: data
+      - file: data/pascal-deepaug.yml
+        path: data
+      - file: models/yolov5s.yaml
+        path: models
+      - file: models/yolov5m.yaml
+        path: models
+      - file: models/yolov5l.yaml
+        path: models
+      - file: models/yolov5x.yaml
+        path: models
+      - file: models/yolov4-p5.yaml
+        path: models
+      - file: models/yolov4-p6.yaml
+        path: models
+      - file: models/yolov4-p7.yaml
+        path: models
+      - file: yolov5s.pt
+      - file: yolov5m.pt
+      - file: yolov5l.pt
+      - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    adapt:
+      description: Adapt a Cityscapes model to specific image corruption type
+      main: adapt
+      flags-dest: args
+      flags:
+        data: data/city/cityscapes_adapt.yml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: yolov5x-source
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: 'yolov5x-source'
+        output_run_id:
+          arg-name: output-run-id
+          default: 'pascal-prop-5x'
+        cfg: models/yolov5x.yaml
+        corruption: contrast
+        split: target
+        warmup_epochs:
+          arg-name: epochs
+          default: 50
+        finetune_epochs:
+          arg-name: finetune-epochs
+          default: 50
+        severity:
+          default: 3
+          choices: [1,2,3,4,5,'MIX']
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        augment:
+          default: yes
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 640
+        label_img_size:
+          arg-name: label-img-size
+          default: 640
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/pascal-source.yml
+          path: data
+        - file: data/voc_cat-contrast-3.yaml
+          path: data
+        - file: data/pascal_concat.yaml
+          path: data
+        - file: data/pascal-concat_pseudo.yaml
+          path: data
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5l.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5l.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    tune_pseudo:
+      description: Finetune a Cityscapes model using both labeled clean source data and corrupted target data with pseudo-labels
+      main: train
+      flags-dest: args
+      flags:
+        data: data/city/city_concat_pseudo.yaml
+        pseudo_run_id:
+          arg-name: pseudo-run-id
+          default: 8fbf557d7ba34f5b9ac12b73d00dc6a1
+        weights: ''
+        ckpt_run_id:
+          arg-name: ckpt-run-id
+          default: ''
+        cfg: models/yolov5m.yaml
+        corruption: contrast
+        split: target
+        severity:
+          default: 3
+          choices: [1,2,3,4,5,'MIX']
+        test_severity:
+          default: 0
+          arg-name: test-severity
+        conf_thres:
+          default: 0.001
+          arg-name: conf-thres
+        iou_thres:
+          default: 0.65
+          arg-name: iou-thres
+        port:
+          arg-name: ddp-port
+          default: 9999
+        fast: false
+
+        lr: 1e-5
+        bs:
+          arg-name: batch-size
+          default: 128
+        epochs: 100
+        augment:
+          default: false
+          arg-switch: yes
+        nomosaic:
+          default: false
+          arg-switch: yes
+        noautoanchor:
+          default: true
+          arg-switch: yes
+        shuffle: true
+        img_size:
+          arg-name: img-size
+          default: 416
+        notest: false
+        cache:
+          arg-name: cache-image
+          arg-switch: yes
+          default: true
+        gpus:
+          arg-name: device
+          default: '0,1'
+        multi_scale:
+          arg-name: multi-scale
+          arg-switch: yes
+          default: false
+        rect:
+          default: false
+          arg-switch: yes
+        train_layers:
+          arg-name: train-layers
+          default: ''
+          choices: ['', 'all', 'bn_only', 'bn_and_last']
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+      requires:
+        - file: data/pascal-source.yml
+          path: data
+        - file: data/voc_cat-contrast-3.yaml
+          path: data
+        - file: data/pascal_concat.yaml
+          path: data
+        - file: data/pascal-concat_pseudo.yaml
+          path: data
+        - file: models/yolov5s.yaml
+          path: models
+        - file: models/yolov5m.yaml
+          path: models
+        - file: models/yolov5l.yaml
+          path: models
+        - file: models/yolov5x.yaml
+          path: models
+        - file: yolov5s.pt
+        - file: yolov5m.pt
+        - file: yolov5l.pt
+        - file: yolov5x.pt
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =lr
+        - =batch_size
+        - =epochs
+        - =img_size
+        - =weights
+        - =cfg
+        - =multi_scale
+        - =rect
+        - =shuffle
+        - =corruption
+        - =severity
+        - =data
+        - =augment
+        - =nomosaic
+        - =ckpt_run_id
+        - =pseudo_run_id
+        - =train_layers
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+        - max metrics/mAP_0.5 as best_mAP.5
+        - max metrics/precision as best_prec
+        - max metrics/recall as best_recall
+        - last metrics/mAP_0.5 as last_mAP.5
+        - last metrics/precision as last_prec
+        - last metrics/recall as last_recall
+        - max val/cls_loss
+        - max val/giou_loss
+        - max val/obj_loss
+
+    test:
+      description: Test a Yolo object detection model on Pascal 2007 test
+      main: test
+      flags-dest: args
+      flags:
+        data: data/city/city_test.yml
+        ckpt_run_id:
+          default: '8fbf557d7ba34f5b9ac12b73d00dc6a1'
+          arg-name: ckpt-run-id
+        corruption: contrast
+        severity: 0
+        bs:
+          arg-name: batch-size
+          default: 64
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 640
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+        verbose:
+          default: false
+          arg-switch: yes
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - exclude:
+            dir: docs
+
+        - exclude:
+            dir: outputs
+        - include: "utils/*.py"
+        - include: "*.png"
+        - include: "*.jpg"
+
+      requires:
+      - file: data/pascal-test.yml
+        path: data
+
+      output-scalars:
+        - 'Clean - (\key): (\value)'
+        - 'Corrupt - (\key): (\value)'
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =severity
+        - last clean_AP50
+        - last corrupt_AP50
+        - last rPC_50
+        - last clean_AP
+        - last corrupt_AP
+        - last rPC
+        - last clean_P
+        - last corrupt_P
+        - last rP
+        - last clean_R
+        - last corrupt_R
+        - last rR
+
+    label:
+      description: Generate pseudo-labels of given image set
+      main: label
+      flags-dest: args
+      flags:
+        data: data/city/city_label.yml
+        ckpt_run_id:
+          default: '8fbf557d7ba34f5b9ac12b73d00dc6a1'  # yolov5m
+          arg-name: ckpt-run-id
+        corruption: contrast
+        severity: 3
+        display:
+          default: false
+          arg-switch: yes
+        save:
+          default: false
+          arg-switch: yes
+        confidence:
+          default: false
+          arg-switch: yes
+        augment:
+          default: false
+          arg-switch: yes
+        img_size:
+          arg-name: img-size
+          default: 640
+        conf_threshold:
+          arg-name: conf-thres
+          default: 0.4
+        iou_threshold:
+          arg-name: iou-thres
+          default: 0.65
+        gpus:
+          arg-name: device
+          type: string
+          default: '2'
+
+
+      sourcecode:
+        - exclude:
+            dir: weights
+        - exclude:
+            dir: coco_weights
+        - exclude:
+            dir: runs
+        - exclude:
+            dir: .vscode
+        - exclude:
+            dir: inference
+        - include: "*.png"
+        - include: "*.jpg"
+        - include: "utils/*.py"
+      requires:
+        - file: data/pascal-label.yml
+          path: data
+
+      compare:
+        - =img_size
+        - =data
+        - =augment
+        - =corruption
+        - =ckpt_run_id
+        - =split
+        - =year

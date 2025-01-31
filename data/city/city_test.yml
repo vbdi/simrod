@@ -1,0 +1,6 @@
+test: /home/${username}/data/city_yolo/labels/val/
+
+# number of classes
+nc: 8
+
+names:  ['person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle']
